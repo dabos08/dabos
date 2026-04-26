@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loading...</title>
+
+<style>
+  body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#0a0a0a;
+    color:#00ff9c;
+    font-family:monospace;
+    overflow:hidden;
+  }
+
+  .box{
+    text-align:center;
+    width:90%;
+    max-width:420px;
+  }
+
+  .bar{
+    width:100%;
+    height:10px;
+    background:#222;
+    border-radius:10px;
+    overflow:hidden;
+    margin-top:16px;
+  }
+
+  .fill{
+    height:100%;
+    width:0%;
+    background:#00ff9c;
+    transition:width .1s linear;
+  }
+
+  .hidden{ display:none; }
+
+  /* efek glitch ringan */
+  .glitch{
+    position:relative;
+    animation:glitch 0.5s infinite;
+  }
+
+  @keyframes glitch{
+    0%{ transform:translate(0,0); }
+    20%{ transform:translate(-2px,1px); }
+    40%{ transform:translate(2px,-1px); }
+    60%{ transform:translate(-1px,2px); }
+    80%{ transform:translate(1px,-2px); }
+    100%{ transform:translate(0,0); }
+  }
+
+  .final{
+    background:#fff;
+    color:#ff4d6d;
+  }
+</style>
+</head>
+
+<body>
+
+<div id="screen1" class="box">
+  <h3 class="glitch">Initializing system...</h3>
+  <p id="text"></p>
+  <div class="bar">
+    <div class="fill" id="fill"></div>
+  </div>
+</div>
+
+<div id="screen2" class="box hidden">
+  <h1>🎉 Kena prank! 🎉</h1>
+  <p style="color:#555;">Santai 😆 cuma iseng doang</p>
+</div>
+
+<script>
+const fill = document.getElementById("fill");
+const text = document.getElementById("text");
+
+const steps = [
+  "Connecting...",
+  "Scanning system...",
+  "Checking device...",
+  "Almost done..."
+];
+
+let progress = 0;
+let stepIndex = 0;
+
+// efek ngetik
+function typeText(str, cb){
+  text.innerHTML = "";
+  let i = 0;
+  const typing = setInterval(()=>{
+    text.innerHTML += str[i];
+    i++;
+
+    // beep kecil (opsional)
+    try{
+      let ctx = new (window.AudioContext || window.webkitAudioContext)();
+      let o = ctx.createOscillator();
+      o.frequency.value = 800;
+      o.connect(ctx.destination);
+      o.start();
+      o.stop(ctx.currentTime + 0.02);
+    }catch(e){}
+
+    if(i >= str.length){
+      clearInterval(typing);
+      if(cb) cb();
+    }
+  }, 40);
+}
+
+// progress jalan
+function runStep(){
+  if(stepIndex >= steps.length) return;
+
+  typeText(steps[stepIndex], ()=>{
+    stepIndex++;
+  });
+}
+
+runStep();
+
+const interval = setInterval(()=>{
+  progress += 1.5;
+  fill.style.width = progress + "%";
+
+  // vibrate ringan (kalau support)
+  if(navigator.vibrate && progress % 20 < 2){
+    navigator.vibrate(10);
+  }
+
+  if(progress % 25 < 2){
+    runStep();
+  }
+
+  if(progress >= 100){
+    clearInterval(interval);
+
+    setTimeout(()=>{
+      document.body.classList.add("final");
+      document.getElementById("screen1").classList.add("hidden");
+      document.getElementById("screen2").classList.remove("hidden");
+    }, 800);
+  }
+
+}, 60);
+</script>
+
+</body>
+</html>
