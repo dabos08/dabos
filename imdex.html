@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loading...</title>
+<style>
+  body{
+    margin:0; height:100vh; background:#000; color:#00ff9c;
+    font-family:monospace; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .wrap{ width:92%; max-width:520px; }
+
+  .title{ margin:0 0 8px 0; opacity:.9; }
+  .terminal{
+    background:#050505; border:1px solid #0f0; border-radius:8px;
+    padding:12px; height:220px; overflow:hidden; position:relative;
+    box-shadow:0 0 12px rgba(0,255,156,.2) inset;
+  }
+  .log{ line-height:1.4; font-size:13px; opacity:.95; }
+  .cursor::after{ content:"▍"; margin-left:4px; animation:blink 1s infinite; }
+  @keyframes blink{ 0%,50%,100%{opacity:1} 25%,75%{opacity:0} }
+
+  .bar{
+    width:100%; height:10px; background:#111; border-radius:999px;
+    overflow:hidden; margin-top:10px;
+  }
+  .fill{
+    width:0%; height:100%;
+    background:linear-gradient(90deg,#00ff9c,#00e1ff);
+    transition:width .08s linear;
+  }
+
+  /* glitch halus */
+  .glitch{ animation:gl 0.4s infinite; }
+  @keyframes gl{
+    0%{transform:translate(0,0)}
+    20%{transform:translate(-1px,1px)}
+    40%{transform:translate(1px,-1px)}
+    60%{transform:translate(-1px,-1px)}
+    80%{transform:translate(1px,1px)}
+    100%{transform:translate(0,0)}
+  }
+
+  .overlay{
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background:#fff; color:#ff4d6d; text-align:center; padding:24px;
+  }
+  .overlay.show{ display:flex; }
+  .overlay h1{ margin:0 0 8px 0; font-size:28px; }
+  .overlay p{ color:#555; margin:0; }
+
+  .hint{
+    position:fixed; top:8px; right:10px; color:#777; font-size:11px;
+  }
+</style>
+</head>
+<body>
+
+<div class="hint">just for fun 😉</div>
+
+<div class="wrap">
+  <h3 class="title glitch">Initializing system…</h3>
+
+  <div class="terminal" id="terminal">
+    <div class="log" id="log"></div>
+  </div>
+
+  <div class="bar">
+    <div class="fill" id="fill"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div>
+    <h1>🎉 Kena prank! 🎉</h1>
+    <p>Santai 😆 cuma iseng doang</p>
+  </div>
+</div>
+
+<script>
+const logEl = document.getElementById("log");
+const fill = document.getElementById("fill");
+const overlay = document.getElementById("overlay");
+
+const steps = [
+  "Connecting to server…",
+  "Verifying session…",
+  "Loading modules…",
+  "Syncing data…",
+  "Finalizing…"
+];
+
+let progress = 0;
+let stepIndex = 0;
+
+// beep ringan (opsional)
+function beep(freq=900, dur=0.02){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.frequency.value = freq;
+    o.connect(g); g.connect(ctx.destination);
+    g.gain.value = 0.05;
+    o.start();
+    o.stop(ctx.currentTime + dur);
+  }catch(e){}
+}
+
+// ketik satu baris
+function typeLine(text, done){
+  let i = 0;
+  const line = document.createElement("div");
+  line.className = "cursor";
+  logEl.appendChild(line);
+
+  const t = setInterval(()=>{
+    line.textContent += text[i] || "";
+    i++;
+
+    if(i % 3 === 0) beep(700 + (i%5)*80, 0.01);
+
+    if(i > text.length){
+      clearInterval(t);
+      line.classList.remove("cursor");
+      done && done();
+    }
+  }, 28);
+}
+
+// tambah baris log
+function pushLog(txt){
+  typeLine(txt, ()=>{
+    // auto scroll dalam box
+    const term = document.getElementById("terminal");
+    term.scrollTop = term.scrollHeight;
+  });
+}
+
+// jalankan step
+function runStep(){
+  if(stepIndex >= steps.length) return;
+  pushLog(steps[stepIndex]);
+  stepIndex++;
+}
+
+// loop progress
+runStep();
+
+const iv = setInterval(()=>{
+  progress += 1.3;
+  fill.style.width = progress + "%";
+
+  // getar halus (kalau support)
+  if(navigator.vibrate && progress % 20 < 2){
+    navigator.vibrate(8);
+  }
+
+  // tiap 25% tambah step
+  if(progress % 25 < 2){
+    runStep();
+  }
+
+  // random log kecil biar “hidup”
+  if(Math.random() < 0.08){
+    const extras = [
+      "…checking cache",
+      "…allocating memory",
+      "…resolving host",
+      "…optimizing pipeline"
+    ];
+    pushLog(extras[Math.floor(Math.random()*extras.length)]);
+  }
+
+  if(progress >= 100){
+    clearInterval(iv);
+    pushLog("Done.");
+
+    setTimeout(()=>{
+      overlay.classList.add("show");
+      document.body.style.background = "#fff";
+    }, 900);
+  }
+}, 60);
+</script>
+
+</body>
+</html>
